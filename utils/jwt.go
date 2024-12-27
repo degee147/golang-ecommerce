@@ -20,8 +20,9 @@ type Claims struct {
 // GenerateJWT generates a JWT for the user
 func GenerateJWT(userID uint, isAdmin bool) (string, error) {
 	claims := &jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		"user_id":  userID,
+		"is_admin": isAdmin,
+		"exp":      time.Now().Add(time.Hour * 72).Unix(),
 	}
 	key := os.Getenv("JWT_SECRET")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

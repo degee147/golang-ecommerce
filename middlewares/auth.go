@@ -53,27 +53,18 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Validate if the token is valid and extract the claims
+		// Extract user info from the token (assuming `is_admin` is part of the token claims)
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// Example of extracting a user ID from the claims
-			userID, ok := claims["user_id"].(float64) // Assuming user_id is a number
-			if !ok {
-				fmt.Println("Error: Invalid user ID in token") // Debug log
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID in token"})
-				c.Abort()
-				return
-			}
+			// Set the user ID and is_admin in the context
+			c.Set("user_id", claims["user_id"])
+			c.Set("is_admin", claims["is_admin"]) // Set is_admin value in context
 
-			// Set the user ID in the context for further use in the application
-			c.Set("user_id", uint(userID))
-			fmt.Println("User ID from token:", userID) // Debug log
+			// Proceed to the next handler
+			c.Next()
 		} else {
-			fmt.Println("Error: Invalid token claims") // Debug log
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
-			return
 		}
-
 		// Proceed to the next middleware or handler
 		c.Next()
 	}

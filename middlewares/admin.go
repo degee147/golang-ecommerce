@@ -9,16 +9,17 @@ import (
 // AdminMiddleware checks if the user is an admin
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Retrieve the `isAdmin` value set in the JWT middleware or context
-		isAdmin, exists := c.Get("isAdmin")
+		// Retrieve the `is_admin` value set in the JWT middleware or context
+		isAdmin, exists := c.Get("is_admin")
 
-		if !exists || !isAdmin.(bool) {
+		// Check if the value exists and is a boolean
+		if !exists || isAdmin == nil || !isAdmin.(bool) {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Access forbidden: Admins only"})
 			c.Abort() // Stop the request from proceeding further
 			return
 		}
 
-		// If admin, continue with the request
+		// If the user is an admin, continue with the request
 		c.Next()
 	}
 }

@@ -13,6 +13,7 @@ func RegisterUser(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required,min=6"`
+		IsAdmin  bool   `json:"is_admin" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "Invalid input data")
@@ -28,6 +29,7 @@ func RegisterUser(c *gin.Context) {
 	user := models.User{
 		Email:    input.Email,
 		Password: string(hashedPassword),
+		IsAdmin:  input.IsAdmin,
 	}
 	if err := models.DB.Create(&user).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to create user: "+err.Error())
