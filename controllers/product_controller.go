@@ -16,6 +16,15 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
+	// Check if a product with the same name already exists
+	var existingProduct models.Product
+	if err := models.DB.Where("name = ?", product.Name).First(&existingProduct).Error; err == nil {
+		// Product with the same name already exists
+		utils.RespondError(c, http.StatusConflict, "Product with this name already exists")
+		return
+	}
+
+	// Create the new product if no conflict
 	if err := models.DB.Create(&product).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to create product")
 		return
@@ -37,18 +46,36 @@ func GetProducts(c *gin.Context) {
 
 // UpdateProduct updates a product (admin only)
 func UpdateProduct(c *gin.Context) {
-	id := c.Param("id")
+	var input struct {
+		Name        string  `json:"name"`
+		Price       float64 `json:"price"`
+		Stock       int     `json:"stock"`
+		Description string  `json:"description"`
+	}
+
+	// Bind input JSON to struct
+	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid input data")
+		return
+	}
+
+	// Get product ID from URL parameter
+	productID := c.Param("id")
+
+	// Find the product by ID
 	var product models.Product
-	if err := models.DB.Where("id = ?", id).First(&product).Error; err != nil {
+	if err := models.DB.Where("id = ?", productID).First(&product).Error; err != nil {
 		utils.RespondError(c, http.StatusNotFound, "Product not found")
 		return
 	}
 
-	if err := c.ShouldBindJSON(&product); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "Invalid request data")
-		return
-	}
+	// Update product fields
+	product.Name = input.Name
+	product.Price = input.Price
+	product.Stock = input.Stock
+	product.Description = input.Description
 
+	// Save the updated product to the database
 	if err := models.DB.Save(&product).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to update product")
 		return
@@ -59,8 +86,18 @@ func UpdateProduct(c *gin.Context) {
 
 // DeleteProduct deletes a product (admin only)
 func DeleteProduct(c *gin.Context) {
-	id := c.Param("id")
-	if err := models.DB.Delete(&models.Product{}, id).Error; err != nil {
+	// Get product ID from URL parameter
+	productID := c.Param("id")
+
+	// Find the product by ID
+	var product models.Product
+	if err := models.DB.Where("id = ?", productID).First(&product).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, "Product not found")
+		return
+	}
+
+	// Delete the product from the database
+	if err := models.DB.Delete(&product).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to delete product")
 		return
 	}

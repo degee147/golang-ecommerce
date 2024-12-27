@@ -11,44 +11,74 @@ import (
 
 // PlaceOrder places a new order for the authenticated user
 func CreateOrder(c *gin.Context) {
-	var orderInput struct {
-		Products []struct {
-			ProductID uint `json:"product_id" binding:"required"`
-			Quantity  int  `json:"quantity" binding:"required"`
-		} `json:"products" binding:"required"`
-	}
-	if err := c.ShouldBindJSON(&orderInput); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "Invalid input data")
-		return
-	}
-
+	// Get user ID from the context (set by the AuthMiddleware)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
+		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized user not found")
 		return
 	}
 
+	// Convert userID from float64 to uint
+	userIDUint, ok := userID.(float64)
+	if !ok {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	convertedUserID := uint(userIDUint)
+
+	// Define the structure for the incoming order request
+	var orderInput struct {
+		Items []struct {
+			ProductID uint `json:"product_id" binding:"required"`
+			Quantity  uint `json:"quantity" binding:"required"`
+		} `json:"items" binding:"required"`
+		Total float64 `json:"total" binding:"required"`
+	}
+
+	// Bind the incoming JSON to the orderInput struct
+	if err := c.ShouldBindJSON(&orderInput); err != nil {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid order data")
+		return
+	}
+
+	// Create a new order record
 	order := models.Order{
-		UserID: userID.(uint),
+		UserID: convertedUserID,
+		Total:  orderInput.Total,
 		Status: "Pending",
 	}
+
+	// Save the order to the database
 	if err := models.DB.Create(&order).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to create order")
 		return
 	}
 
-	for _, product := range orderInput.Products {
+	// Check if products exist before adding them to the order
+	for _, item := range orderInput.Items {
+		var product models.Product
+		// Check if the product exists
+		if err := models.DB.First(&product, item.ProductID).Error; err != nil {
+			utils.RespondError(c, http.StatusNotFound, fmt.Sprintf("Product with ID %d not found", item.ProductID))
+			return
+		}
+
+		// Convert uint to int for Quantity field
 		orderItem := models.OrderItem{
 			OrderID:   order.ID,
-			ProductID: product.ProductID,
-			Quantity:  product.Quantity,
+			ProductID: item.ProductID,
+			Quantity:  int(item.Quantity), // Convert to int here
 		}
+
+		// Save the order items to the database
 		if err := models.DB.Create(&orderItem).Error; err != nil {
-			utils.RespondError(c, http.StatusInternalServerError, "Failed to add products to order")
+			utils.RespondError(c, http.StatusInternalServerError, "Failed to add items to order")
 			return
 		}
 	}
 
+	// Respond with the created order details
 	utils.RespondSuccess(c, "Order created successfully", order)
 }
 

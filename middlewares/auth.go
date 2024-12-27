@@ -14,7 +14,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract the Authorization header
 		authHeader := c.GetHeader("Authorization")
-		fmt.Println("Authorization Header:", authHeader) // Debug log
+		// fmt.Println("Authorization Header:", authHeader) // Debug log
 
 		// Check if Authorization header is missing or does not start with "Bearer "
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -34,7 +34,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Remove the "Bearer " prefix from the token
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		fmt.Println("Token String:", tokenStr) // Debug log
+		// fmt.Println("Token String:", tokenStr) // Debug log
 
 		// Parse the token using the secret key
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
