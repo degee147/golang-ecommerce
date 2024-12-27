@@ -9,6 +9,18 @@ import (
 )
 
 // CreateProduct creates a new product (admin only)
+// @Summary Create a new product
+// @Description Creates a new product, requires admin access
+// @Tags Products
+// @Accept  json
+// @Produce  json
+// @Param product body models.Product true "Product data"
+// @Success 201 {object} models.Product "Product created successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 409 {object} utils.ErrorResponse "Product with this name already exists"
+// @Failure 500 {object} utils.ErrorResponse "Failed to create product"
+// @Security BearerAuth
+// @Router /products [post]
 func CreateProduct(c *gin.Context) {
 	var product models.Product
 	if err := c.ShouldBindJSON(&product); err != nil {
@@ -34,6 +46,13 @@ func CreateProduct(c *gin.Context) {
 }
 
 // GetProducts fetches all products
+// @Summary Get all products
+// @Description Fetches all products in the system
+// @Tags Products
+// @Produce  json
+// @Success 200 {array} models.Product "List of products"
+// @Failure 500 {object} utils.ErrorResponse "Failed to fetch products"
+// @Router /products [get]
 func GetProducts(c *gin.Context) {
 	var products []models.Product
 	if err := models.DB.Find(&products).Error; err != nil {
@@ -44,7 +63,20 @@ func GetProducts(c *gin.Context) {
 	utils.RespondSuccess(c, "Products fetched successfully", products)
 }
 
-// UpdateProduct updates a product (admin only)
+// UpdateProduct updates an existing product (admin only)
+// @Summary Update an existing product
+// @Description Updates the details of an existing product, requires admin access
+// @Tags Products
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Product ID"
+// @Param product body models.Product true "Product data"
+// @Success 200 {object} models.Product "Product updated successfully"
+// @Failure 400 {object} utils.ErrorResponse "Invalid input data"
+// @Failure 404 {object} utils.ErrorResponse "Product not found"
+// @Failure 500 {object} utils.ErrorResponse "Failed to update product"
+// @Security BearerAuth
+// @Router /products/{id} [put]
 func UpdateProduct(c *gin.Context) {
 	var input struct {
 		Name        string  `json:"name"`
@@ -85,6 +117,15 @@ func UpdateProduct(c *gin.Context) {
 }
 
 // DeleteProduct deletes a product (admin only)
+// @Summary Delete a product
+// @Description Deletes a product by its ID, requires admin access
+// @Tags Products
+// @Param id path string true "Product ID"
+// @Success 200 {string} string "Product deleted successfully"
+// @Failure 404 {object} utils.ErrorResponse "Product not found"
+// @Failure 500 {object} utils.ErrorResponse "Failed to delete product"
+// @Security BearerAuth
+// @Router /products/{id} [delete]
 func DeleteProduct(c *gin.Context) {
 	// Get product ID from URL parameter
 	productID := c.Param("id")

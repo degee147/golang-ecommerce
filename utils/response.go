@@ -31,3 +31,14 @@ func RespondValidationError(c *gin.Context, errors map[string]string) {
 		"errors":  errors,
 	})
 }
+
+type ErrorResponse struct {
+	Message string `json:"message"` // Message field to hold the error message
+}
+type SuccessResponse struct {
+	Message string `json:"message"` // Message field to hold the error message
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}

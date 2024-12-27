@@ -1,0 +1,275 @@
+definitions:
+  models.Product:
+    type: object
+  utils.ErrorResponse:
+    properties:
+      message:
+        description: Message field to hold the error message
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user with email and password, then generate a JWT
+        token
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to generate token
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Login and get JWT token
+      tags:
+      - Users
+  /orders:
+    get:
+      description: Retrieve all orders placed by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized user
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to fetch orders
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all orders for the authenticated user
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: Place a new order for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid order data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Place a new order
+  /orders/{id}:
+    delete:
+      description: Cancel an existing order for the authenticated user
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "400":
+          description: Order ID is required
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized user
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Permission denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to cancel the order
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel an order
+      tags:
+      - Orders
+  /orders/{id}/status:
+    put:
+      description: Update the status (e.g., Pending, Shipped, Delivered, Canceled)
+        of an order
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "400":
+          description: Invalid status value
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to update order status
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update the status of an order
+      tags:
+      - Orders
+  /products:
+    get:
+      description: Fetches all products in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of products
+          schema:
+            items:
+              $ref: '#/definitions/models.Product'
+            type: array
+        "500":
+          description: Failed to fetch products
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Get all products
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product, requires admin access
+      parameters:
+      - description: Product data
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/models.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Product created successfully
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Invalid request data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "409":
+          description: Product with this name already exists
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to create product
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new product
+      tags:
+      - Products
+  /products/{id}:
+    delete:
+      description: Deletes a product by its ID, requires admin access
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Product deleted successfully
+          schema:
+            type: string
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to delete product
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a product
+      tags:
+      - Products
+    put:
+      consumes:
+      - application/json
+      description: Updates the details of an existing product, requires admin access
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product data
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/models.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product updated successfully
+          schema:
+            $ref: '#/definitions/models.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to update product
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an existing product
+      tags:
+      - Products
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with email, password, and admin status
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Failed to create user
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Users
+swagger: "2.0"

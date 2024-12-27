@@ -9,6 +9,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// RegisterUser registers a new user in the system
+// @Summary Register a new user
+// @Description Register a new user with email, password, and admin status
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Failure 400 {object} utils.ErrorResponse "Invalid input data"
+// @Failure 500 {object} utils.ErrorResponse "Failed to create user"
+// @Router /register [post]
 func RegisterUser(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email" binding:"required,email"`
@@ -39,7 +48,16 @@ func RegisterUser(c *gin.Context) {
 	utils.RespondSuccess(c, "User registered successfully", nil)
 }
 
-// Login and generate JWT
+// Login authenticates a user and generates a JWT
+// @Summary Login and get JWT token
+// @Description Authenticate a user with email and password, then generate a JWT token
+// @Tags Users
+// @Accept  json
+// @Produce  json
+// @Failure 400 {object} utils.ErrorResponse "Invalid request data"
+// @Failure 401 {object} utils.ErrorResponse "Invalid credentials"
+// @Failure 500 {object} utils.ErrorResponse "Failed to generate token"
+// @Router /login [post]
 func Login(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email"`

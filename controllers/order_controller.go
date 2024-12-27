@@ -9,7 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// PlaceOrder places a new order for the authenticated user
+// CreateOrder places a new order for the authenticated user
+// @Summary Place a new order
+// @Description Place a new order for the authenticated user
+// @Accept json
+// @Produce json
+// @Failure 400 {object} utils.ErrorResponse "Invalid order data"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /orders [post]
 func CreateOrder(c *gin.Context) {
 	// Get user ID from the context (set by the AuthMiddleware)
 	userID, exists := c.Get("user_id")
@@ -82,6 +89,15 @@ func CreateOrder(c *gin.Context) {
 	utils.RespondSuccess(c, "Order created successfully", order)
 }
 
+// GetOrders fetches all orders for the authenticated user
+// @Summary Get all orders for the authenticated user
+// @Description Retrieve all orders placed by the authenticated user
+// @Tags Orders
+// @Produce  json
+// @Failure 401 {object} utils.ErrorResponse "Unauthorized user"
+// @Failure 500 {object} utils.ErrorResponse "Failed to fetch orders"
+// @Security BearerAuth
+// @Router /orders [get]
 func GetOrders(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	// fmt.Println("userID String:", userID) // Debug log
@@ -100,6 +116,18 @@ func GetOrders(c *gin.Context) {
 	utils.RespondSuccess(c, "Orders fetched successfully", orders)
 }
 
+// CancelOrder cancels an existing order for the authenticated user
+// @Summary Cancel an order
+// @Description Cancel an existing order for the authenticated user
+// @Tags Orders
+// @Param id path string true "Order ID"
+// @Failure 400 {object} utils.ErrorResponse "Order ID is required"
+// @Failure 401 {object} utils.ErrorResponse "Unauthorized user"
+// @Failure 403 {object} utils.ErrorResponse "Permission denied"
+// @Failure 404 {object} utils.ErrorResponse "Order not found"
+// @Failure 500 {object} utils.ErrorResponse "Failed to cancel the order"
+// @Security BearerAuth
+// @Router /orders/{id} [delete]
 func CancelOrder(c *gin.Context) {
 	// Retrieve the order ID from the URL
 	orderID := c.Param("id")
@@ -155,6 +183,15 @@ func CancelOrder(c *gin.Context) {
 }
 
 // UpdateOrderStatus updates the status of an order (admin only)
+// @Summary Update the status of an order
+// @Description Update the status (e.g., Pending, Shipped, Delivered, Canceled) of an order
+// @Tags Orders
+// @Param id path string true "Order ID"
+// @Failure 400 {object} utils.ErrorResponse "Invalid status value"
+// @Failure 404 {object} utils.ErrorResponse "Order not found"
+// @Failure 500 {object} utils.ErrorResponse "Failed to update order status"
+// @Security BearerAuth
+// @Router /orders/{id}/status [put]
 func UpdateOrderStatus(c *gin.Context) {
 	// Retrieve the order ID from the URL
 	orderID := c.Param("id")

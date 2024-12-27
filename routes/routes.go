@@ -5,11 +5,15 @@ import (
 	"ecommerce-api/middlewares"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func SetupRoutes(router *gin.Engine) {
 	api := router.Group("/api/v1")
 	{
+
+		api.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 		// User routes
 		api.POST("/register", controllers.RegisterUser)
 		api.POST("/login", controllers.Login)
