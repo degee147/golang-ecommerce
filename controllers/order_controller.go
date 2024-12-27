@@ -101,26 +101,57 @@ func GetOrders(c *gin.Context) {
 }
 
 func CancelOrder(c *gin.Context) {
+	// Retrieve the order ID from the URL
 	orderID := c.Param("id")
+	if orderID == "" {
+		utils.RespondError(c, http.StatusBadRequest, "Order ID is required")
+		return
+	}
 
+	// Retrieve the user ID from the context (set by the AuthMiddleware)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized user not found")
+		return
+	}
+
+	// Convert userID from float64 to uint
+	userIDUint, ok := userID.(float64)
+	if !ok {
+		utils.RespondError(c, http.StatusUnauthorized, "Invalid user ID")
+		return
+	}
+
+	convertedUserID := uint(userIDUint)
+
+	// Find the order by ID
 	var order models.Order
-	if err := models.DB.Where("id = ?", orderID).First(&order).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "Order not found")
+	if err := models.DB.First(&order, orderID).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, fmt.Sprintf("Order with ID %s not found", orderID))
 		return
 	}
 
-	if order.Status != "Pending" {
-		utils.RespondError(c, http.StatusBadRequest, "Only pending orders can be cancelled")
+	// Check if the order belongs to the authenticated user
+	if order.UserID != convertedUserID {
+		utils.RespondError(c, http.StatusForbidden, "You do not have permission to cancel this order")
 		return
 	}
 
-	order.Status = "Cancelled"
+	// Check if the order status is already "Canceled" or cannot be canceled
+	if order.Status == "Canceled" {
+		utils.RespondError(c, http.StatusBadRequest, "Order is already canceled")
+		return
+	}
+
+	// Update the order status to "Canceled"
+	order.Status = "Canceled"
 	if err := models.DB.Save(&order).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "Failed to cancel order")
+		utils.RespondError(c, http.StatusInternalServerError, "Failed to cancel the order")
 		return
 	}
 
-	utils.RespondSuccess(c, "Order cancelled successfully", nil)
+	// Respond with the updated order details
+	utils.RespondSuccess(c, "Order canceled successfully", order)
 }
 
 // GetUserOrders fetches all orders for the authenticated user
@@ -143,43 +174,51 @@ func GetUserOrders(c *gin.Context) {
 
 // UpdateOrderStatus updates the status of an order (admin only)
 func UpdateOrderStatus(c *gin.Context) {
-	// Get order ID from the request URL
+	// Retrieve the order ID from the URL
 	orderID := c.Param("id")
-
-	var order models.Order
-	if err := models.DB.Preload("Products").First(&order, orderID).Error; err != nil {
-		utils.RespondError(c, http.StatusNotFound, "Order not found")
+	if orderID == "" {
+		utils.RespondError(c, http.StatusBadRequest, "Order ID is required")
 		return
 	}
 
-	// Check if the user is an admin
-	isAdmin, exists := c.Get("isAdmin")
-	if !exists || !isAdmin.(bool) {
-		utils.RespondError(c, http.StatusForbidden, "Only admins can update order status")
-		return
-	}
-
-	// Parse the new status from the request body
-	var input struct {
+	// Define the structure for the incoming request data
+	var statusUpdate struct {
 		Status string `json:"status" binding:"required"`
 	}
-	if err := c.ShouldBindJSON(&input); err != nil {
+
+	// Bind the incoming JSON to the statusUpdate struct
+	if err := c.ShouldBindJSON(&statusUpdate); err != nil {
 		utils.RespondError(c, http.StatusBadRequest, "Invalid request data")
 		return
 	}
 
-	// Validate status
-	allowedStatuses := map[string]bool{"Pending": true, "Shipped": true, "Cancelled": true}
-	if !allowedStatuses[input.Status] {
-		utils.RespondError(c, http.StatusBadRequest, "Invalid order status")
+	// Find the order by ID
+	var order models.Order
+	if err := models.DB.First(&order, orderID).Error; err != nil {
+		utils.RespondError(c, http.StatusNotFound, fmt.Sprintf("Order with ID %s not found", orderID))
 		return
 	}
 
-	order.Status = input.Status
+	// Ensure that only valid statuses are accepted (e.g., Pending, Shipped, Delivered, Canceled)
+	validStatuses := map[string]bool{
+		"Pending":   true,
+		"Shipped":   true,
+		"Delivered": true,
+		"Canceled":  true,
+	}
+
+	if _, valid := validStatuses[statusUpdate.Status]; !valid {
+		utils.RespondError(c, http.StatusBadRequest, "Invalid status value")
+		return
+	}
+
+	// Update the order status
+	order.Status = statusUpdate.Status
 	if err := models.DB.Save(&order).Error; err != nil {
 		utils.RespondError(c, http.StatusInternalServerError, "Failed to update order status")
 		return
 	}
 
+	// Respond with the updated order details
 	utils.RespondSuccess(c, "Order status updated successfully", order)
 }
