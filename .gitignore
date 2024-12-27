@@ -1,0 +1,34 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Output of build tools
+bin/
+build/
+
+# Dependencies
+vendor/
+
+# Go module files
+go.sum
+
+# Logs
+*.log
+
+# IDE specific files
+.idea/
+.vscode/
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Swagger documentation
+docs/swagger.json
