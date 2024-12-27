@@ -1,0 +1,6 @@
+DB_USER=xyz
+DB_PASSWORD=xyz
+DB_NAME=xyz
+DB_HOST=localhost
+DB_PORT=3306
+JWT_SECRET=your_secret_key
