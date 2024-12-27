@@ -21,6 +21,13 @@ import (
 // @Failure 500 {object} utils.ErrorResponse "Failed to create product"
 // @Security BearerAuth
 // @Router /products [post]
+//
+//	@Example {
+//	   "name": "Product 3",
+//	   "price": 75,
+//	   "stock": 30,
+//	   "description": "A description of the product 3"
+//	}
 func CreateProduct(c *gin.Context) {
 	var product models.Product
 	if err := c.ShouldBindJSON(&product); err != nil {
