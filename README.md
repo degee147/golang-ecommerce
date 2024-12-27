@@ -8,7 +8,7 @@ This is an Ecommerce API built with Go Lang. It provides endpoints to manage pro
 ### How to use it:
 
 1. **Create `.env` File**: 
-   In the root directory of your project, create a file named `.env` and add the environment variables as shown above. This file contains your database and JWT configuration settings.
+   In the root directory of your project, create a file named `.env` and add the environment variables as shown in env copy file. This file contains your database and JWT configuration settings.
    
 2. **Install Dependencies**:
    The `go mod tidy` command ensures that your Go modules and dependencies are correctly installed.
