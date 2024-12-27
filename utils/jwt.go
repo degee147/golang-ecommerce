@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -18,16 +19,14 @@ type Claims struct {
 
 // GenerateJWT generates a JWT for the user
 func GenerateJWT(userID uint, isAdmin bool) (string, error) {
-	claims := Claims{
-		UserID:  userID,
-		IsAdmin: isAdmin,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Token valid for 24 hours
-		},
+	claims := &jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(time.Hour * 72).Unix(),
 	}
-
+	key := os.Getenv("JWT_SECRET")
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	secret := []byte(key) // Same key used in middleware
+	return token.SignedString(secret)
 }
 
 // VerifyJWT verifies the token and returns the claims
@@ -42,7 +41,7 @@ func VerifyJWT(tokenString string) (*Claims, error) {
 
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
-		return nil, errors.New("invalid token")
+		return nil, errors.New("invalid token2 ")
 	}
 
 	return claims, nil

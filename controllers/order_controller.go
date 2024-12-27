@@ -3,6 +3,7 @@ package controllers
 import (
 	"ecommerce-api/models"
 	"ecommerce-api/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,7 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -51,58 +52,12 @@ func CreateOrder(c *gin.Context) {
 	utils.RespondSuccess(c, "Order created successfully", order)
 }
 
-func PlaceOrder(c *gin.Context) {
-	var orderInput struct {
-		Products []struct {
-			ProductID uint `json:"product_id" binding:"required"`
-			Quantity  int  `json:"quantity" binding:"required,min=1"`
-		} `json:"products" binding:"required"`
-		Total float64 `json:"total" binding:"required,gt=0"`
-	}
-
-	if err := c.ShouldBindJSON(&orderInput); err != nil {
-		utils.RespondError(c, http.StatusBadRequest, "Invalid order data")
-		return
-	}
-
-	// Get the authenticated user's ID from the context
-	userID, exists := c.Get("userID")
-	if !exists {
-		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
-	// Create the order in the database
-	order := models.Order{
-		UserID: userID.(uint),
-		Total:  orderInput.Total,
-		Status: "Pending",
-	}
-	if err := models.DB.Create(&order).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "Failed to create order")
-		return
-	}
-
-	// Add products to the order
-	for _, product := range orderInput.Products {
-		orderProduct := models.OrderItem{
-			OrderID:   order.ID,
-			ProductID: product.ProductID,
-			Quantity:  product.Quantity,
-		}
-		if err := models.DB.Create(&orderProduct).Error; err != nil {
-			utils.RespondError(c, http.StatusInternalServerError, "Failed to add products to order")
-			return
-		}
-	}
-
-	utils.RespondSuccess(c, "Order placed successfully", order)
-}
-
 func GetOrders(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
+	fmt.Println("userID String:", userID) // Debug log
+	fmt.Println("exists :", exists)       // Debug log
 	if !exists {
-		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
+		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized user not found")
 		return
 	}
 
@@ -141,7 +96,7 @@ func CancelOrder(c *gin.Context) {
 // GetUserOrders fetches all orders for the authenticated user
 func GetUserOrders(c *gin.Context) {
 	// Get the authenticated user's ID from the context
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
 		return
