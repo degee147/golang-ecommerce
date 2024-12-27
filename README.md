@@ -1,3 +1,10 @@
+# Ecommerce API using Go lang
+
+This is an Ecommerce API built with Go Lang. It provides endpoints to manage products, orders, users, and more, with JWT-based authentication.
+
+## Setup
+
+
 ### How to use it:
 
 1. **Create `.env` File**: 
