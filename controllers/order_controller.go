@@ -84,8 +84,8 @@ func CreateOrder(c *gin.Context) {
 
 func GetOrders(c *gin.Context) {
 	userID, exists := c.Get("user_id")
-	fmt.Println("userID String:", userID) // Debug log
-	fmt.Println("exists :", exists)       // Debug log
+	// fmt.Println("userID String:", userID) // Debug log
+	// fmt.Println("exists :", exists)       // Debug log
 	if !exists {
 		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized user not found")
 		return
@@ -152,24 +152,6 @@ func CancelOrder(c *gin.Context) {
 
 	// Respond with the updated order details
 	utils.RespondSuccess(c, "Order canceled successfully", order)
-}
-
-// GetUserOrders fetches all orders for the authenticated user
-func GetUserOrders(c *gin.Context) {
-	// Get the authenticated user's ID from the context
-	userID, exists := c.Get("user_id")
-	if !exists {
-		utils.RespondError(c, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
-	var orders []models.Order
-	if err := models.DB.Where("user_id = ?", userID).Preload("Products").Find(&orders).Error; err != nil {
-		utils.RespondError(c, http.StatusInternalServerError, "Failed to fetch orders")
-		return
-	}
-
-	utils.RespondSuccess(c, "Orders retrieved successfully", orders)
 }
 
 // UpdateOrderStatus updates the status of an order (admin only)
